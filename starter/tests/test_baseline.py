@@ -1,5 +1,5 @@
 import sudoku_logic
-from app import app
+from app import CURRENT, app
 
 
 def test_generated_board_has_nine_rows_and_columns():
@@ -44,3 +44,38 @@ def test_hint_returns_a_solution_value():
 
     assert response.status_code == 200
     assert response.get_json()['value'] in range(1, 10)
+
+
+def test_check_puzzle_returns_only_incorrect_cells():
+    client = app.test_client()
+    puzzle = client.get('/new').get_json()['puzzle']
+    board = [row[:] for row in puzzle]
+    empty = next((row, col) for row in range(9) for col in range(9)
+                 if board[row][col] == sudoku_logic.EMPTY)
+    row, col = empty
+    board[row][col] = 1 if CURRENT['solution'][row][col] != 1 else 2
+
+    response = client.post('/check-puzzle', json={'board': board})
+
+    assert response.status_code == 200
+    assert response.get_json()['incorrect'] == [[row, col]]
+
+
+def test_check_solution_reports_completion_without_revealing_solution():
+    client = app.test_client()
+    client.get('/new')
+
+    response = client.post('/check-solution', json={'board': CURRENT['solution']})
+
+    assert response.status_code == 200
+    assert response.get_json() == {'complete': True}
+
+
+def test_check_puzzle_rejects_invalid_board():
+    client = app.test_client()
+    client.get('/new')
+
+    response = client.post('/check-puzzle', json={'board': []})
+
+    assert response.status_code == 400
+    assert response.get_json()['error'] == 'Board must be a 9 by 9 grid of numbers.'
