@@ -52,6 +52,22 @@ python -m pytest -q
 
 The test suite covers the Flask API, hint behavior, and the generator's unique-solution guarantee for every difficulty.
 
+## Architecture
+
+The application follows a small layered design:
+
+```text
+HTTP routes -> game and puzzle services -> reusable validators
+```
+
+- `starter/app/__init__.py` creates the Flask application and registers the blueprint.
+- `starter/app/routes.py` contains thin HTTP handlers and consistent error responses.
+- `starter/app/services/puzzle_service.py` contains Sudoku generation, solving, and uniqueness logic.
+- `starter/app/services/game_service.py` contains active-game state, checks, and hints.
+- `starter/app/utils/validators.py` validates difficulties and board request data.
+- `starter/static/js/` separates API calls, board behavior, game controls, timer behavior, and leaderboard storage.
+- `starter/app.py` and `starter/sudoku_logic.py` remain compatibility shims for the original launch and import paths.
+
 ## Project Instructions
 
 Use GitHub Copilot to refactor the code for this game to add more advanced features. The goal is to create a more modern and maintainable codebase and add additional functionality to the final product. You can use any combination of code completion and chat features, like Ask, Edit, or Agent modes.
