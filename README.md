@@ -42,6 +42,16 @@ python app.py
 
 7. Open http://127.0.0.1:5000 in your browser.
 
+### Tests
+
+From the `starter` directory, run:
+
+```bash
+python -m pytest -q
+```
+
+The test suite covers the Flask API, hint behavior, and the generator's unique-solution guarantee for every difficulty.
+
 ## Project Instructions
 
 Use GitHub Copilot to refactor the code for this game to add more advanced features. The goal is to create a more modern and maintainable codebase and add additional functionality to the final product. You can use any combination of code completion and chat features, like Ask, Edit, or Agent modes.
@@ -58,3 +68,5 @@ Use GitHub Copilot to refactor the code for this game to add more advanced featu
 - The game should be responsive and work well on both desktop and mobile devices.
 - UI colors should be visually appealing and accessible.
 - Completed and correct puzzles should display a congratulatory message with the time taken and hints used and ask for the user's name for Top 10 times.
+
+The finished app includes Easy, Medium, and Hard difficulty presets, uniqueness-checked puzzles, immediate conflict feedback, locked hints, a timer, Check validation, responsive light/dark themes, alternating 3x3 square colors, and a Top 10 leaderboard stored in browser local storage.

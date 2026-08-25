@@ -1,57 +1,96 @@
+from __future__ import annotations
+
 import copy
 import random
+from collections.abc import Iterable
 
 SIZE = 9
+BOX_SIZE = 3
 EMPTY = 0
+DIFFICULTIES = {'easy': 40, 'medium': 32, 'hard': 27}
 
-def deep_copy(board):
+
+def deep_copy(board: list[list[int]]) -> list[list[int]]:
     return copy.deepcopy(board)
 
-def create_empty_board():
+
+def create_empty_board() -> list[list[int]]:
     return [[EMPTY for _ in range(SIZE)] for _ in range(SIZE)]
 
-def is_safe(board, row, col, num):
-    # Check row and column
-    for x in range(SIZE):
-        if board[row][x] == num or board[x][col] == num:
-            return False
-    # Check 3x3 box
-    start_row = row - row % 3
-    start_col = col - col % 3
-    for i in range(3):
-        for j in range(3):
-            if board[start_row + i][start_col + j] == num:
-                return False
-    return True
 
-def fill_board(board):
+def is_safe(board: list[list[int]], row: int, col: int, number: int) -> bool:
+    if any(board[row][column] == number for column in range(SIZE)):
+        return False
+    if any(board[index][col] == number for index in range(SIZE)):
+        return False
+    box_row, box_col = row - row % BOX_SIZE, col - col % BOX_SIZE
+    return all(board[box_row + r][box_col + c] != number
+               for r in range(BOX_SIZE) for c in range(BOX_SIZE))
+
+
+def _find_empty(board: list[list[int]]) -> tuple[int, int] | None:
     for row in range(SIZE):
         for col in range(SIZE):
             if board[row][col] == EMPTY:
-                possible = list(range(1, SIZE + 1))
-                random.shuffle(possible)
-                for candidate in possible:
-                    if is_safe(board, row, col, candidate):
-                        board[row][col] = candidate
-                        if fill_board(board):
-                            return True
-                        board[row][col] = EMPTY
-                return False
-    return True
+                return row, col
+    return None
 
-def remove_cells(board, clues):
-    attempts = SIZE * SIZE - clues
-    while attempts > 0:
-        row = random.randrange(SIZE)
-        col = random.randrange(SIZE)
-        if board[row][col] != EMPTY:
+
+def fill_board(board: list[list[int]]) -> bool:
+    location = _find_empty(board)
+    if location is None:
+        return True
+    row, col = location
+    candidates = list(range(1, SIZE + 1))
+    random.shuffle(candidates)
+    for number in candidates:
+        if is_safe(board, row, col, number):
+            board[row][col] = number
+            if fill_board(board):
+                return True
             board[row][col] = EMPTY
-            attempts -= 1
+    return False
 
-def generate_puzzle(clues=35):
+
+def count_solutions(board: list[list[int]], limit: int = 2) -> int:
+    location = _find_empty(board)
+    if location is None:
+        return 1
+    row, col = location
+    total = 0
+    for number in range(1, SIZE + 1):
+        if is_safe(board, row, col, number):
+            board[row][col] = number
+            total += count_solutions(board, limit)
+            board[row][col] = EMPTY
+            if total >= limit:
+                return total
+    return total
+
+
+def remove_cells(board: list[list[int]], clues: int) -> None:
+    clues = max(17, min(SIZE * SIZE, clues))
+    cells = list(range(SIZE * SIZE))
+    random.shuffle(cells)
+    for cell in cells:
+        if sum(value != EMPTY for row in board for value in row) <= clues:
+            return
+        row, col = divmod(cell, SIZE)
+        original = board[row][col]
+        board[row][col] = EMPTY
+        if count_solutions(deep_copy(board)) != 1:
+            board[row][col] = original
+
+
+def generate_puzzle(clues: int = DIFFICULTIES['medium']) -> tuple[list[list[int]], list[list[int]]]:
     board = create_empty_board()
     fill_board(board)
     solution = deep_copy(board)
     remove_cells(board, clues)
-    puzzle = deep_copy(board)
-    return puzzle, solution
+    return board, solution
+
+
+def is_valid_board(board: Iterable[Iterable[int]]) -> bool:
+    rows = [list(row) for row in board]
+    return (len(rows) == SIZE and all(len(row) == SIZE for row in rows)
+            and all(value in range(EMPTY, SIZE + 1) for row in rows for value in row))
